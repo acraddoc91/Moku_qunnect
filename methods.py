@@ -1,6 +1,7 @@
 from pymoku.instruments import ArbitraryWaveGen
 from pymoku import Moku
 import numpy as np
+import pickle
 
 from setup import *
 
@@ -50,7 +51,7 @@ def form_square(l_w, r_w, sep):
         if ((x <= l_w) and (x >= 0.0)) or ((x >= (l_w + sep)) and (x <= (l_w + r_w + sep))):
             sq_wave.append(1.0)
         else:
-            sq_wave.append(0.0)
+            sq_wave.append(-1)
     return sq_wave
 
 
@@ -79,11 +80,18 @@ def value_to_parameter(v, per):
 def parameter_to_value(p, per):
     return p * 450 * per * 1e+3
 
+# Do some interpolation-y stuff to make sure what comes out optically resembles what we want
+def do_conversion(optical_power):
+    op_to_ao = pickle.load( open( "ao_interpolation.pck", "rb" ) )
+    return op_to_ao(optical_power)
 
 # Send waveforms to MOKU for output
 def upload_waveforms(gaussian, square, m, i, t, g_amp, s_amp):
     try:
-        i.write_lut(1, gaussian)
+
+        # i.write_lut(1, gaussian)
+        # Make sure Gaussian has AOM interpolation-y stuff
+        i.write_lut(1,do_conversion(gaussian))
         i.write_lut(2, square)
 
         i.gen_waveform(1, period=t, amplitude=g_amp, interpolation=True, phase=0)
