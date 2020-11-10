@@ -21,6 +21,5 @@ while True:
         break
     except:
         print('Connection attempt failed. Retrying')
-
 clear_terminal()
 page_selector(moku, wavegen)

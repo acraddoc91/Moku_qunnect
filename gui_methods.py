@@ -17,11 +17,12 @@ def page_selector(moku=None, wavegen=None):
 
         clear_terminal()
         # Get values and save
-        per, g_amp, s_amp, l_w, r_w, sep, fwhm, g_pos = get_values()
+        per, g_amp, l_amp, r_amp, l_w, r_w, sep, fwhm, g_pos = get_values()
         current_params = {
             'period':per,
             'gaussian amp':g_amp,
-            'square amp':s_amp,
+            'l square amp':l_amp,
+            'r square amp':r_amp,
             'left square width':l_w,
             'right square width':r_w,
             'square separation':sep,
@@ -35,8 +36,7 @@ def page_selector(moku=None, wavegen=None):
         sep_param = value_to_parameter(sep, per)
         fwhm_param = value_to_parameter(fwhm, per)
         g_pos_param = g_pos.split(',')
-        g_pos_param = [int(g_pos_param[0]), str(g_pos_param[1]), float(g_pos_param[2])]
-        g_pos_param[2] = value_to_parameter(g_pos_param[2], per)
+        g_pos_param = [int(g_pos_param[0]), str(g_pos_param[1]), value_to_parameter(float(g_pos_param[2]), per)]
         
         # Get mean of gaussian from position parameter
         m = gaussian_location(l_w_param, r_w_param, sep_param, g_pos_param[0], g_pos_param[1], g_pos_param[2])
@@ -44,7 +44,7 @@ def page_selector(moku=None, wavegen=None):
         # Form waves
         if form_waves: 
             g = form_gaussian(m, fwhm_param)
-            s = form_square(l_w_param, r_w_param, sep_param)
+            s = form_square(l_w_param, r_w_param, l_amp, r_amp, sep_param)
         
         # Initialize landing page
         page = landing_page()
@@ -60,7 +60,7 @@ def page_selector(moku=None, wavegen=None):
             form_waves = False
         
         elif page == 'o':
-            upload_waveforms(g, s, moku, wavegen, per, g_amp, s_amp)
+            upload_waveforms(g, s, moku, wavegen, per, g_amp)
             while True:
                 try:
                     moku, wavegen = initialize_moku(SERIAL_NO)
