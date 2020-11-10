@@ -81,7 +81,7 @@ def parameter_to_value(p, per):
     return p * 450 * per * 1e+3
 
 # Do some interpolation-y stuff to make sure what comes out optically resembles what we want
-def do_conversion(optical_power):
+def do_ao_conversion(optical_power):
     op_to_ao = pickle.load( open( "ao_interpolation.pck", "rb" ) )
     return op_to_ao(optical_power)
 
@@ -91,7 +91,7 @@ def upload_waveforms(gaussian, square, m, i, t, g_amp, s_amp):
 
         # i.write_lut(1, gaussian)
         # Make sure Gaussian has AOM interpolation-y stuff
-        i.write_lut(1,do_conversion(gaussian))
+        i.write_lut(1,do_ao_conversion(gaussian))
         i.write_lut(2, square)
 
         i.gen_waveform(1, period=t, amplitude=g_amp, interpolation=True, phase=0)
