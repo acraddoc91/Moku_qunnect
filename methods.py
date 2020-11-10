@@ -88,6 +88,14 @@ def upload_waveforms(gaussian, square, m, i, t, g_amp, s_amp):
 
         i.gen_waveform(1, period=t, amplitude=g_amp, interpolation=True, phase=0)
         i.gen_waveform(2, period=t, amplitude=s_amp, interpolation=False, phase=0)
+
+        # Set things up so the Moku is triggered from the backpanel
+        i.set_waveform_trigger_output(1,trig_en=True,single=True,duration=t,hold_last=False)
+        i.set_waveform_trigger_output(2,trig_en=True,single=True,duration=t,hold_last=False)
+
+        i.set_waveform_trigger(1,source='ext',edge='rising',level=3)
+        i.set_waveform_trigger(2,source='ext',edge='rising',level=3)
+        
         i.sync_phase()
     finally:
         m.close()
