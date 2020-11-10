@@ -1,7 +1,6 @@
 from pymoku.instruments import ArbitraryWaveGen
 from pymoku import Moku
 import numpy as np
-import pickle
 
 from setup import *
 
@@ -40,18 +39,27 @@ def form_gaussian(m, fwhm):
             gaussian.append(0.0)
         else:
             gaussian.append(gauss(x, std=s, mean=m))
-    gaussian = gaussian / max(gaussian)
+    # gaussian = gaussian / max(gaussian)
+    # Sandy Adjustment for AO driver
+    gaussian = 2*(gaussian / max(gaussian))-1
     return gaussian
 
 
 # Create square pulses
-def form_square(l_w, r_w, sep):
+def form_square(l_w, r_w, l_a, r_a, sep, def_amp=2.0):
     sq_wave = []
+    l_a = l_a / def_amp
+    r_a = r_a / def_amp
     for x in DATA:
-        if ((x <= l_w) and (x >= 0.0)) or ((x >= (l_w + sep)) and (x <= (l_w + r_w + sep))):
-            sq_wave.append(1.0)
+        # Modified by Sandy for AO
+        if ((x <= l_w) and (x >= 0.0)):
+            sq_wave.append(l_a)
+        elif ((x >= (l_w + sep)) and (x <= (l_w + r_w + sep))):
+            sq_wave.append(r_a)
         else:
+            # sq_wave.append(0.0)
             sq_wave.append(-1)
+    
     return sq_wave
 
 
@@ -80,30 +88,23 @@ def value_to_parameter(v, per):
 def parameter_to_value(p, per):
     return p * 450 * per * 1e+3
 
-# Do some interpolation-y stuff to make sure what comes out optically resembles what we want
-def do_ao_conversion(optical_power):
-    op_to_ao = pickle.load( open( "ao_interpolation.pck", "rb" ) )
-    return op_to_ao(optical_power)
 
 # Send waveforms to MOKU for output
-def upload_waveforms(gaussian, square, m, i, t, g_amp, s_amp):
+def upload_waveforms(gaussian, square, m, i, t, g_amp, s_amp=2.0):
     try:
-
-        # i.write_lut(1, gaussian)
-        # Make sure Gaussian has AOM interpolation-y stuff
-        i.write_lut(1,do_ao_conversion(gaussian))
+        i.write_lut(1, gaussian)
         i.write_lut(2, square)
 
         i.gen_waveform(1, period=t, amplitude=g_amp, interpolation=True, phase=0)
         i.gen_waveform(2, period=t, amplitude=s_amp, interpolation=False, phase=0)
 
-        # Set things up so the Moku is triggered from the backpanel
+        # Added by Sandy
         i.set_waveform_trigger_output(1,trig_en=True,single=True,duration=t,hold_last=False)
         i.set_waveform_trigger_output(2,trig_en=True,single=True,duration=t,hold_last=False)
 
         i.set_waveform_trigger(1,source='ext',edge='rising',level=3)
         i.set_waveform_trigger(2,source='ext',edge='rising',level=3)
-        
+
         i.sync_phase()
     finally:
         m.close()

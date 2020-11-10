@@ -6,7 +6,8 @@ CONFIG_PATH = 'config.txt'
 CONFIG_PARAMS = [
     'period',
     'gaussian amp',
-    'square amp',
+    'l square amp',
+    'r square amp',
     'left square width',
     'right square width',
     'square separation',
